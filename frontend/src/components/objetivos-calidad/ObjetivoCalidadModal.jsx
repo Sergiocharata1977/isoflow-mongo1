@@ -11,44 +11,50 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 
-function ObjetivoCalidadModal({ isOpen, onClose, onSave, objetivo }) {
-  const [formData, setFormData] = useState({
+function ObjetivoCalidadModal({ isOpen, onClose, onSave, objetivo, procesos = [], apiError }) {
+    const [formData, setFormData] = useState({
     nombre: "",
     descripcion: "",
+    procesoId: "",
     responsable: "",
-    fechaInicio: new Date().toISOString().split('T')[0],
-    fechaObjetivo: "",
-    indicadores: [],
-    estado: "en_progreso"
+    fechaInicio: "",
+    fechaFin: "",
+    accionesPlaneadas: "",
+    estado: "Activo"
   });
 
-  const [nuevoIndicador, setNuevoIndicador] = useState("");
+  
   const [error, setError] = useState("");
 
   useEffect(() => {
+    const formatDate = (date) => date ? new Date(date).toISOString().split('T')[0] : "";
+
     if (objetivo) {
       setFormData({
         nombre: objetivo.nombre || "",
         descripcion: objetivo.descripcion || "",
+        procesoId: objetivo.procesoId?._id || objetivo.procesoId || "",
         responsable: objetivo.responsable || "",
-        fechaInicio: objetivo.fechaInicio || new Date().toISOString().split('T')[0],
-        fechaObjetivo: objetivo.fechaObjetivo || "",
-        indicadores: objetivo.indicadores || [],
-        estado: objetivo.estado || "en_progreso"
+        fechaInicio: formatDate(objetivo.fechaInicio),
+        fechaFin: formatDate(objetivo.fechaFin),
+        accionesPlaneadas: objetivo.accionesPlaneadas || "",
+        estado: objetivo.estado || "Activo"
       });
     } else {
       // Reset form when creating new
       setFormData({
         nombre: "",
         descripcion: "",
+        procesoId: "",
         responsable: "",
         fechaInicio: new Date().toISOString().split('T')[0],
-        fechaObjetivo: "",
-        indicadores: [],
-        estado: "en_progreso"
+        fechaFin: "",
+        accionesPlaneadas: "",
+        estado: "Activo"
       });
     }
-  }, [objetivo]);
+    setError(""); // Limpiar errores al cambiar de objetivo
+  }, [objetivo, isOpen]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -58,33 +64,25 @@ function ObjetivoCalidadModal({ isOpen, onClose, onSave, objetivo }) {
     }));
   };
 
-  const handleAddIndicador = () => {
-    if (nuevoIndicador.trim()) {
-      setFormData(prev => ({
-        ...prev,
-        indicadores: [...prev.indicadores, nuevoIndicador.trim()]
-      }));
-      setNuevoIndicador("");
-    }
-  };
 
-  const handleRemoveIndicador = (index) => {
-    setFormData(prev => ({
-      ...prev,
-      indicadores: prev.indicadores.filter((_, i) => i !== index)
-    }));
-  };
 
-  const handleSubmit = (e) => {
+    const handleSubmit = (e) => {
     e.preventDefault();
-    
-    if (!formData.nombre || !formData.descripcion || !formData.responsable) {
-      setError("Por favor complete todos los campos obligatorios");
+    setError(""); // Limpiar error local
+
+    if (!formData.nombre || !formData.procesoId || !formData.responsable || !formData.fechaInicio || !formData.fechaFin) {
+      setError("Por favor complete todos los campos obligatorios (*).");
       return;
     }
 
-    onSave(formData);
-    onClose();
+    // Crear un objeto de datos limpio para enviar
+    const dataToSend = {
+      ...formData,
+      procesoId: formData.procesoId === "" ? null : formData.procesoId,
+    };
+
+    onSave(dataToSend);
+    // El onClose() se llamará desde el componente padre tras el guardado exitoso
   };
 
   if (!isOpen) return null;
@@ -116,16 +114,36 @@ function ObjetivoCalidadModal({ isOpen, onClose, onSave, objetivo }) {
 
             <div className="grid grid-cols-4 items-start gap-4">
               <Label htmlFor="descripcion" className="text-right mt-2">
-                Descripción <span className="text-red-500">*</span>
+                Descripción
               </Label>
               <Textarea
                 id="descripcion"
                 name="descripcion"
                 value={formData.descripcion}
                 onChange={handleChange}
-                className="col-span-3 min-h-[100px]"
-                required
+                className="col-span-3 min-h-[80px]"
               />
+            </div>
+
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="procesoId" className="text-right">
+                Proceso <span className="text-red-500">*</span>
+              </Label>
+              <select
+                id="procesoId"
+                name="procesoId"
+                value={formData.procesoId}
+                onChange={handleChange}
+                className="col-span-3 border rounded-md px-3 py-2 bg-white dark:bg-gray-800"
+                required
+              >
+                <option value="" disabled>Seleccione un proceso</option>
+                {procesos.map(proceso => (
+                  <option key={proceso._id} value={proceso._id}>
+                    {proceso.nombre}
+                  </option>
+                ))}
+              </select>
             </div>
 
             <div className="grid grid-cols-4 items-center gap-4">
@@ -144,7 +162,7 @@ function ObjetivoCalidadModal({ isOpen, onClose, onSave, objetivo }) {
 
             <div className="grid grid-cols-4 items-center gap-4">
               <Label htmlFor="fechaInicio" className="text-right">
-                Fecha Inicio
+                Fecha Inicio <span className="text-red-500">*</span>
               </Label>
               <Input
                 type="date"
@@ -153,67 +171,37 @@ function ObjetivoCalidadModal({ isOpen, onClose, onSave, objetivo }) {
                 value={formData.fechaInicio}
                 onChange={handleChange}
                 className="col-span-3"
+                required
               />
             </div>
 
             <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="fechaObjetivo" className="text-right">
-                Fecha Objetivo
+              <Label htmlFor="fechaFin" className="text-right">
+                Fecha Fin <span className="text-red-500">*</span>
               </Label>
               <Input
                 type="date"
-                id="fechaObjetivo"
-                name="fechaObjetivo"
-                value={formData.fechaObjetivo}
+                id="fechaFin"
+                name="fechaFin"
+                value={formData.fechaFin}
                 onChange={handleChange}
                 className="col-span-3"
+                required
               />
             </div>
 
             <div className="grid grid-cols-4 items-start gap-4">
-              <Label className="text-right mt-2">
-                Indicadores
+              <Label htmlFor="accionesPlaneadas" className="text-right mt-2">
+                Acciones Planeadas
               </Label>
-              <div className="col-span-3 space-y-2">
-                <div className="flex gap-2">
-                  <Input
-                    value={nuevoIndicador}
-                    onChange={(e) => setNuevoIndicador(e.target.value)}
-                    placeholder="Nuevo indicador"
-                    className="flex-1"
-                  />
-                  <Button 
-                    type="button" 
-                    onClick={handleAddIndicador}
-                    variant="outline"
-                  >
-                    Agregar
-                  </Button>
-                </div>
-                
-                <div className="border rounded-md p-2 max-h-32 overflow-y-auto">
-                  {formData.indicadores.length === 0 ? (
-                    <p className="text-sm text-gray-500">No hay indicadores</p>
-                  ) : (
-                    <ul className="space-y-1">
-                      {formData.indicadores.map((indicador, index) => (
-                        <li key={index} className="flex justify-between items-center">
-                          <span>{indicador}</span>
-                          <Button
-                            type="button"
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => handleRemoveIndicador(index)}
-                            className="h-6 w-6 p-0 text-red-500 hover:bg-red-50"
-                          >
-                            ×
-                          </Button>
-                        </li>
-                      ))}
-                    </ul>
-                  )}
-                </div>
-              </div>
+              <Textarea
+                id="accionesPlaneadas"
+                name="accionesPlaneadas"
+                value={formData.accionesPlaneadas}
+                onChange={handleChange}
+                className="col-span-3 min-h-[80px]"
+                placeholder="Describa las acciones para alcanzar el objetivo..."
+              />
             </div>
 
             <div className="grid grid-cols-4 items-center gap-4">
@@ -225,19 +213,21 @@ function ObjetivoCalidadModal({ isOpen, onClose, onSave, objetivo }) {
                 name="estado"
                 value={formData.estado}
                 onChange={handleChange}
-                className="col-span-3 border rounded-md px-3 py-2"
+                className="col-span-3 border rounded-md px-3 py-2 bg-white dark:bg-gray-800"
               >
-                <option value="en_progreso">En Progreso</option>
-                <option value="completado">Completado</option>
-                <option value="atrasado">Atrasado</option>
-                <option value="cancelado">Cancelado</option>
+                <option value="Activo">Activo</option>
+                <option value="En revisión">En revisión</option>
+                <option value="Cumplido">Cumplido</option>
+                <option value="No alcanzado">No alcanzado</option>
+                <option value="Cancelado">Cancelado</option>
               </select>
             </div>
           </div>
 
-          {error && (
-            <div className="text-red-500 text-sm mb-4">
-              {error}
+          {(error || apiError) && (
+            <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded-md mb-4" role="alert">
+              <strong className="font-bold">Error: </strong>
+              <span className="block sm:inline">{error || apiError}</span>
             </div>
           )}
 

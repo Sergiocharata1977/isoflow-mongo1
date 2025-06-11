@@ -1,81 +1,56 @@
-import './loadEnv.js'; // LOAD ENV VARS FIRST
-
+import './loadEnv.js'; // Cargar variables de entorno primero
 import express from 'express';
 import cors from 'cors';
-import multer from 'multer';
 import path from 'path';
 import fs from 'fs';
-// import ragService from './services/ragService.js'; // RAG Service temporalmente desactivado
-// AI Services removed: documentAnalyzerService, assistantInitializer, isoAssistantService
-import { connectDB } from './lib/mongoClient.js'; // Added for MongoDB
-import departamentosRouter from './routes/departamentos.routes.js';
-import puestosRouter from './routes/puestos.routes.js';
-import personalRouter from './routes/personal.routes.js';
-import documentosRouter from './routes/documentos.routes.js';
-import normasPuntosRouter from './routes/normasPuntos.routes.js';
-import procesosRouter from './routes/procesos.routes.js';
-import objetivosCalidadRouter from './routes/objetivos-calidad.routes.js';
+import { fileURLToPath } from 'url';
+import connectDB from './lib/mongoClient.js';
 
-// Crear directorio temporal para archivos si no existe
-const tempDir = path.join(process.cwd(), 'temp');
-if (!fs.existsSync(tempDir)) {
-  fs.mkdirSync(tempDir, { recursive: true });
+// Importación de todas las rutas
+
+// import documentosRoutes from './routes/documentos.routes.js';
+// import normasPuntosRoutes from './routes/normasPuntos.routes.js';
+import procesosRoutes from './routes/procesos.routes.js';
+// import objetivosCalidadRoutes from './routes/objetivosCalidad.routes.js';
+// import indicadoresCalidadRoutes from './routes/indicadoresCalidad.routes.js';
+
+// --- Configuración Inicial ---
+const app = express();
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+// Crear directorio de subidas si no existe
+const uploadsDir = path.join(__dirname, 'uploads');
+if (!fs.existsSync(uploadsDir)) {
+  fs.mkdirSync(uploadsDir, { recursive: true });
 }
 
-// Configurar multer para la carga de archivos
-const upload = multer({
-  storage: multer.diskStorage({
-    destination: (req, file, cb) => {
-      cb(null, tempDir);
-    },
-    filename: (req, file, cb) => {
-      cb(null, `${Date.now()}-${file.originalname}`);
-    },
-  }),
-  limits: { fileSize: 10 * 1024 * 1024 }, // 10MB máximo
+// --- Conexión a la Base de Datos ---
+connectDB();
+
+// --- Middlewares ---
+app.use(cors());
+app.use(express.json());
+app.use('/uploads', express.static(uploadsDir));
+
+// --- Rutas de la API ---
+console.log('Registrando rutas de la API...');
+
+// app.use('/api/documentos', documentosRoutes);
+// app.use('/api/normas-puntos', normasPuntosRoutes);
+app.use('/api/procesos', procesosRoutes);
+// app.use('/api/objetivos-calidad', objetivosCalidadRoutes);
+// app.use('/api/indicadores-calidad', indicadoresCalidadRoutes);
+console.log('<<<<< Todas las rutas de la API han sido registradas correctamente >>>>>');
+
+// --- Ruta de Prueba ---
+app.get('/api/test', (req, res) => {
+  res.status(200).json({ message: 'El servidor de prueba está funcionando.' });
 });
 
-const app = express();
-// Temporalmente forzamos el puerto a 3002 para pruebas, ignorando variables de entorno
-const PORT = 3002;
-
-// Middleware
-app.use(cors()); // Permite solicitudes de diferentes orígenes (tu frontend)
-app.use(express.json()); // Permite al servidor entender JSON en las solicitudes
-
-// Rutas para RRHH
-app.use('/api/departamentos', departamentosRouter);
-app.use('/api/puestos', puestosRouter);
-app.use('/api/personal', personalRouter);
-console.log('<<<<< RUTA /api/personal REGISTRADA >>>>>');
-app.use('/api/documentos', documentosRouter);
-console.log('<<<<< RUTA /api/documentos REGISTRADA >>>>>');
-app.use('/api/normas-puntos', normasPuntosRouter);
-console.log('<<<<< RUTA /api/normas-puntos REGISTRADA >>>>>');
-app.use('/api/procesos', procesosRouter);
-console.log('<<<<< RUTA /api/procesos REGISTRADA >>>>>');
-app.use('/api/objetivos-calidad', objetivosCalidadRouter);
-console.log('<<<<< RUTA /api/objetivos-calidad REGISTRADA >>>>>');
-
-// RUTA DE PRUEBA DIRECTA
-app.get('/api/testpersonal', (req, res) => {
-  console.log('<<<<< ACCEDIENDO A RUTA GET /api/testpersonal (DIRECTA EN INDEX.JS) >>>>>');
-  res.status(200).json({ message: 'Ruta /api/testpersonal en index.js alcanzada' });
+// --- Iniciar Servidor ---
+const PORT = process.env.PORT || 5000;
+app.listen(PORT, () => {
+  console.log(`Servidor corriendo en el puerto ${PORT}`);
 });
 
-// Iniciar el servidor
-app.listen(PORT, async () => {
-  console.log(`Servidor backend escuchando en http://localhost:${PORT}`);
-  
-  try {
-    // Conectar a MongoDB
-    await connectDB(); // Added for MongoDB
-    // console.log('MongoDB connection established.'); // Optional: confirmation message
-
-    // OpenAI assistant initialization removed.
-  } catch (error) {
-    // This will catch errors from connectDB() or assistantInitializer
-    console.error('❌ Error crítico durante la inicialización del servidor:', error);
-    process.exit(1); // Exit if critical initialization fails
-  }
-});

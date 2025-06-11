@@ -8,7 +8,8 @@ import { Search, Plus, Edit, Trash2, ArrowUpDown, Check, X } from "lucide-react"
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
 import ObjetivoCalidadModal from "./ObjetivoCalidadModal";
-import { getObjetivosCalidad, deleteObjetivoCalidad } from "@/services/objetivos-calidad";
+import { getObjetivosCalidad, createObjetivoCalidad, updateObjetivoCalidad, deleteObjetivoCalidad } from "@/services/objetivos-calidad";
+import { getProcesos } from "@/services/procesos";
 
 const ESTADOS = {
   en_progreso: { label: "En Progreso", color: "bg-blue-100 text-blue-800" },
@@ -24,12 +25,24 @@ export default function ObjetivosCalidadListing() {
   const [sortConfig, setSortConfig] = useState({ key: "fechaCreacion", direction: "desc" });
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [currentObjetivo, setCurrentObjetivo] = useState(null);
-  const [error, setError] = useState("");
+    const [error, setError] = useState("");
+  const [procesos, setProcesos] = useState([]);
 
-  // Cargar objetivos al montar el componente
+  // Cargar datos iniciales
   useEffect(() => {
     loadObjetivos();
+    loadProcesos();
   }, []);
+
+    const loadProcesos = async () => {
+    try {
+      const data = await getProcesos();
+      setProcesos(data || []);
+    } catch (err) {
+      console.error("Error al cargar procesos:", err);
+      setError("No se pudieron cargar los procesos necesarios.");
+    }
+  };
 
   const loadObjetivos = async () => {
     try {
@@ -98,8 +111,32 @@ export default function ObjetivosCalidadListing() {
     }
   };
 
-  // Manejar guardado exitoso
-  const handleSaveSuccess = () => {
+  // Manejar guardado (crear o actualizar)
+  const handleSave = async (objetivoData) => {
+    try {
+      setError(""); // Limpiar errores previos
+      if (currentObjetivo) {
+        await updateObjetivoCalidad(currentObjetivo._id, objetivoData);
+      } else {
+        await createObjetivoCalidad(objetivoData);
+      }
+      handleModalCloseAndReload();
+    } catch (err) {
+      console.error("Error al guardar el objetivo:", err);
+      const errorMessage = err.response?.data?.message || "No se pudo guardar el objetivo. Verifique los datos e intente de nuevo.";
+      // Para errores de validación, podemos ser más específicos
+      if (err.response?.data?.errors) {
+        const validationErrors = Object.values(err.response.data.errors).map(e => e.message).join(' ');
+        setError(validationErrors);
+      } else {
+        setError(errorMessage);
+      }
+      // No cerramos el modal si hay un error, para que el usuario pueda corregir
+    }
+  };
+
+  // Cerrar modal y recargar lista
+  const handleModalCloseAndReload = () => {
     setIsModalOpen(false);
     setCurrentObjetivo(null);
     loadObjetivos();
@@ -287,9 +324,12 @@ export default function ObjetivosCalidadListing() {
         onClose={() => {
           setIsModalOpen(false);
           setCurrentObjetivo(null);
+          setError(""); // Limpiar errores al cerrar manualmente
         }}
-        onSave={handleSaveSuccess}
+        onSave={handleSave}
         objetivo={currentObjetivo}
+        procesos={procesos}
+        apiError={error} // Pasamos el error de la API al modal
       />
     </div>
   );

@@ -1,7 +1,7 @@
 // Configuración de la aplicación
 
 // URL base de la API de backend
-export const API_BASE_URL = 'http://localhost:3002';
+export const API_BASE_URL = '/api';
 
 // Configuración de autenticación
 export const AUTH_CONFIG = {
