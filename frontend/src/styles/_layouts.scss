@@ -1,0 +1,173 @@
+
+@use 'variables' as *;
+@use 'mixins' as *;
+
+// Main Layout
+.layout {
+  min-height: 100vh;
+  @include flex(column);
+  
+  &-header {
+    position: sticky;
+    top: 0;
+    z-index: $z-index-sticky;
+    background-color: white;
+    border-bottom: 1px solid $border;
+    padding: $spacing-4;
+  }
+  
+  &-sidebar {
+    width: 16rem;
+    border-right: 1px solid $border;
+    height: 100vh;
+    position: fixed;
+    left: 0;
+    top: 0;
+    background-color: white;
+    overflow-y: auto;
+    
+    @include media-down($breakpoint-lg) {
+      transform: translateX(-100%);
+      transition: transform 0.3s ease-in-out;
+      
+      &.open {
+        transform: translateX(0);
+      }
+    }
+  }
+  
+  &-main {
+    flex: 1;
+    padding: $spacing-6;
+    margin-left: 16rem;
+    
+    @include media-down($breakpoint-lg) {
+      margin-left: 0;
+    }
+  }
+  
+  &-footer {
+    border-top: 1px solid $border;
+    padding: $spacing-4;
+    text-align: center;
+  }
+}
+
+// Grid Layouts
+.grid {
+  &-2 {
+    @include grid(1);
+    
+    @include media-up($breakpoint-md) {
+      @include grid(2);
+    }
+  }
+  
+  &-3 {
+    @include grid(1);
+    
+    @include media-up($breakpoint-md) {
+      @include grid(2);
+    }
+    
+    @include media-up($breakpoint-lg) {
+      @include grid(3);
+    }
+  }
+  
+  &-4 {
+    @include grid(1);
+    
+    @include media-up($breakpoint-md) {
+      @include grid(2);
+    }
+    
+    @include media-up($breakpoint-lg) {
+      @include grid(4);
+    }
+  }
+}
+
+// Dashboard Layout
+.dashboard {
+  &-grid {
+    @include grid(1, $spacing-6);
+    
+    @include media-up($breakpoint-lg) {
+      grid-template-columns: 3fr 1fr;
+    }
+  }
+  
+  &-sidebar {
+    @include card;
+    
+    @include media-down($breakpoint-lg) {
+      order: -1;
+    }
+  }
+}
+
+// Form Layout
+.form {
+  &-grid {
+    @include grid(1, $spacing-4);
+    
+    @include media-up($breakpoint-md) {
+      @include grid(2, $spacing-6);
+    }
+  }
+  
+  &-section {
+    margin-bottom: $spacing-8;
+    
+    &:last-child {
+      margin-bottom: 0;
+    }
+  }
+}
+
+// List Layout
+.list {
+  &-grid {
+    @include grid(1, $spacing-4);
+  }
+  
+  &-item {
+    @include card;
+    @include flex(row, space-between, center);
+  }
+}
+
+// Modal Layout
+.modal {
+  &-header {
+    margin-bottom: $spacing-6;
+  }
+  
+  &-body {
+    margin-bottom: $spacing-6;
+  }
+  
+  &-footer {
+    @include flex(row, flex-end, center);
+    gap: $spacing-2;
+  }
+}
+
+// Table Layout
+.table {
+  &-container {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+  
+  &-responsive {
+    @include media-down($breakpoint-md) {
+      display: block;
+      width: 100%;
+      overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
+      -ms-overflow-style: -ms-autohiding-scrollbar;
+    }
+  }
+}

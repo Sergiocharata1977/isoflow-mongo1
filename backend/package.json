@@ -1,0 +1,26 @@
+{
+  "name": "iso-flow-backend",
+  "version": "1.0.0",
+  "description": "Backend para la aplicación ISO Flow",
+  "type": "module",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js",
+    "dev": "node index.js",
+    "seed:personal": "node -r dotenv/config scripts/seed-personal.js dotenv_config_path=./.env",
+    "seed:documentos": "node -r dotenv/config scripts/seed-documentos.js dotenv_config_path=./.env",
+    "seed:normas-puntos": "node -r dotenv/config scripts/seed-normas-puntos.js dotenv_config_path=./.env"
+  },
+  "dependencies": {
+    "@langchain/openai": "^0.5.11",
+    "bcrypt": "^6.0.0",
+    "cors": "^2.8.5",
+    "dotenv": "^16.5.0",
+    "express": "^5.1.0",
+    "langchain": "^0.3.27",
+    "mongodb": "^6.17.0",
+    "multer": "^2.0.1",
+    "openai": "^5.1.0",
+    "pdf-parse": "^1.1.1"
+  }
+}

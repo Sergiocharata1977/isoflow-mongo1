@@ -1,0 +1,137 @@
+
+// Flexbox
+@mixin flex($direction: row, $justify: flex-start, $align: stretch) {
+  display: flex;
+  flex-direction: $direction;
+  justify-content: $justify;
+  align-items: $align;
+}
+
+// Grid
+@mixin grid($columns: 1, $gap: $spacing-4) {
+  display: grid;
+  grid-template-columns: repeat($columns, minmax(0, 1fr));
+  gap: $gap;
+}
+
+// Media Queries
+@mixin media-up($breakpoint) {
+  @media (min-width: $breakpoint) {
+    @content;
+  }
+}
+
+@mixin media-down($breakpoint) {
+  @media (max-width: $breakpoint - 1px) {
+    @content;
+  }
+}
+
+// Typography
+@mixin heading($size: 'md') {
+  @if $size == 'sm' {
+    font-size: $font-size-lg;
+  } @else if $size == 'md' {
+    font-size: 1.5rem;
+  } @else if $size == 'lg' {
+    font-size: 1.875rem;
+  } @else if $size == 'xl' {
+    font-size: 2.25rem;
+  }
+  font-weight: $font-weight-bold;
+  line-height: 1.2;
+}
+
+// Transitions
+@mixin transition($property: all) {
+  transition: $property 0.2s ease-in-out;
+}
+
+// Hover Effects
+@mixin hover {
+  @media (hover: hover) {
+    &:hover {
+      @content;
+    }
+  }
+}
+
+// Focus Styles
+@mixin focus-ring {
+  &:focus-visible {
+    outline: none;
+    box-shadow: 0 0 0 2px $ring;
+  }
+}
+
+// Card Styles
+@mixin card {
+  background-color: white;
+  border-radius: $radius-lg;
+  border: 1px solid $border;
+  padding: $spacing-6;
+  @include transition;
+  
+  &:hover {
+    box-shadow: $shadow-md;
+  }
+}
+
+// Button Styles
+@mixin button-base {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: $radius-md;
+  font-weight: $font-weight-medium;
+  padding: $spacing-2 $spacing-4;
+  @include transition;
+  @include focus-ring;
+}
+
+// Form Input Styles
+@mixin input-base {
+  width: 100%;
+  border-radius: $radius-md;
+  border: 1px solid $input;
+  padding: $spacing-2 $spacing-3;
+  background-color: white;
+  @include transition;
+  
+  &:focus {
+    border-color: $ring;
+    @include focus-ring;
+  }
+}
+
+// Animation Keyframes
+@mixin keyframes($name) {
+  @keyframes #{$name} {
+    @content;
+  }
+}
+
+// Responsive Container
+@mixin container {
+  width: 100%;
+  margin-left: auto;
+  margin-right: auto;
+  padding-left: $spacing-4;
+  padding-right: $spacing-4;
+  
+  @include media-up($breakpoint-sm) {
+    max-width: 640px;
+  }
+  
+  @include media-up($breakpoint-md) {
+    max-width: 768px;
+  }
+  
+  @include media-up($breakpoint-lg) {
+    max-width: 1024px;
+  }
+  
+  @include media-up($breakpoint-xl) {
+    max-width: 1280px;
+  }
+}
